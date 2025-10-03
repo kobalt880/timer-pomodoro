@@ -2,16 +2,26 @@ from classes import *
 
 
 def main():
-    def printer():
-        print(t)
+    during = True
 
-    def end():
-        print('end')
+    def cycle_end():
+        nonlocal during
+        during = False
+        print('END')
+
+    def work_end():
+        print('work end')
+
+    def break_end():
+        print('break end')
+
+    def tick():
+        print(pc.get_timer())
     
-    t = Timer(120, end, printer)
-    t.launch()
+    pc = PomodoroCycle(tick, tick, work_end, break_end, cycle_end, 1, 10, 2)
+    pc.launch()
 
-    while t.get_seconds() != 0:
+    while during:
         sleep(5)
     
 
