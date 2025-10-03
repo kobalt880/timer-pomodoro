@@ -8,6 +8,8 @@ class Timer:
         self._seconds = seconds
         self._end_function = end_function
         self._tick_function = tick_function
+        self._pause = True
+        self._during = False
 
     def _check_expired(self) -> bool:
         expired = self._seconds <= 0
@@ -18,13 +20,22 @@ class Timer:
         return expired
 
     def _time_cycle(self):
-        while not self._check_expired():
+        self._during = True
+        
+        while not self._check_expired() and not self._pause:
             self._seconds -= 1
             self._tick_function()
             sleep(1)
+
+        self._during = False
     
     def launch(self):
-        Thread(target=self._time_cycle).start()
+        self._pause = False
+        if not self._during:
+            Thread(target=self._time_cycle).start()
+
+    def stop(self):
+        self._pause = True
 
     def get_seconds(self) -> int:
         return self._seconds
@@ -47,6 +58,7 @@ class PomodoroCycle:
         self._long_break_time = long_break_time
         self._work_time = work_time
         self._iter_count = iter_count
+        self._ic_reserv = iter_count
         self._work_tick_func = work_tick_func
         self._break_tick_func = break_tick_func
         self._work_end_func = work_end_func
@@ -55,9 +67,12 @@ class PomodoroCycle:
         self._timer = None
 
     def launch(self):
-        Thread(target=self._time_cycle, daemon=True).start()
+        if self._timer is None:
+            self._start_time_cycle()
+        else:
+            self._timer.launch()
 
-    def _time_cycle(self):
+    def _start_time_cycle(self):
         self._start_work_cycle()
 
     def _start_break_cycle(self, long: bool):
@@ -68,6 +83,8 @@ class PomodoroCycle:
                 self._iter_count -= 1
                 self._start_work_cycle()
             else:
+                self._timer = None
+                self._iter_count = self._ic_reserv
                 self._cycle_end_func()
 
         time = self._break_time if not long else self._long_break_time
@@ -85,6 +102,10 @@ class PomodoroCycle:
     def get_timer(self) -> Timer | None:
         return self._timer
 
+    def stop(self):
+        if self._timer is not None:
+            self._timer.stop()
+
     def set_work_time(self, new_time: int):
         self._work_time = new_time
 
@@ -93,5 +114,9 @@ class PomodoroCycle:
 
     def set_long_break_time(self, new_time: int):
         self._long_break_time = new_time
+
+    def __str__(self):
+        return str(self._timer)
         
-    
+
+
