@@ -144,17 +144,17 @@ class TimeFrame(Frame):
     def _create_widgets(self):
         self._status_label = Label(self)
         self._cycle_count_label = Label(self)
-        self._time_label = Label(self, text='00:00', font=('arial', 30))
+        self._time_label = Label(self, text='00:00', font=('arial', 30), bg='#cccccc')
         launch_button = Button(self, text='Запустить', command=self.launch)
         reset_button = Button(self, text='Сбросить', command=self.reset)
         stop_button = Button(self, text='Остановить', command=self.stop)
 
         self._status_label.grid(column=0, row=0, sticky=W)
         self._cycle_count_label.grid(column=0, row=1, sticky=W)
-        self._time_label.grid(column=0, row=2, padx=20, pady=20, columnspan=3)
-        launch_button.grid(column=0, row=3, pady=10, padx=5)
-        reset_button.grid(column=1, row=3, pady=10, padx=5)
-        stop_button.grid(column=2, row=3, pady=10, padx=5)
+        self._time_label.grid(column=0, row=2, padx=20, pady=20, columnspan=3, sticky=EW)
+        launch_button.grid(column=0, row=3, pady=10, padx=10, sticky=EW)
+        reset_button.grid(column=1, row=3, pady=10, padx=10, sticky=EW)
+        stop_button.grid(column=2, row=3, pady=10, padx=10, sticky=EW)
 
     def launch(self):
         if self._pc is None:
@@ -281,10 +281,12 @@ class TimeSettings(Frame):
                 lb_time *= 60
                 break_time *= 60
                 work_time *= 60
-            
-            self._timer.set_time(lb_time, break_time, work_time)
-            messagebox.showinfo('Успешно',
-            'Успешно изменено время')
+
+            if lb_time >= 5 and break_time >= 5 and work_time >= 5:
+                self._timer.set_time(lb_time, break_time, work_time)
+                messagebox.showinfo('Успешно', 'Успешно изменено время')
+            else:
+                messagebox.showerror('Ошибка', 'Нельзя устанавливать таймер меньше чем на 5 секунд')
         else:
             messagebox.showerror('Ошибка',
             'Введите целые положительные числа в каждое поле')
@@ -299,11 +301,70 @@ class TimerWithSettings(Notebook):
         time_frame = TimeFrame(self)
         time_settings = TimeSettings(time_frame, self)
 
-        self.add(time_frame, text='Таймер')
+        self.add(time_frame, text='Управление таймером')
         self.add(time_settings, text='Настройки')
+
+
+class PolyTimer(Frame):
+    def __init__(self, *args, **kwargs):
+        self._bg_color = '#999999'
+        super().__init__(*args, bg=self._bg_color, **kwargs)
+        self._create_widgets()
+        self._timer_dict = {}
+        self.add('Таймер')
+
+    def _create_widgets(self):
+        self._timers = Notebook(self)
+
+        bottom_frame = Frame(self, bg=self._bg_color)
+        buttons = Frame(bottom_frame, bg=self._bg_color)
         
+        self._field = Entry(bottom_frame)
+        add_button = Button(buttons, text='Добавить таймер', command=self.add)
+        remove_button = Button(buttons, text='Удалить таймер', command=self.remove)
 
+        # placing
+        self._timers.pack(fill=X)
+        
+        bottom_frame.pack()
+        self._field.pack(pady=5)
 
+        buttons.pack(pady=2)
+        add_button.pack(side=LEFT, padx=5)
+        remove_button.pack(side=LEFT, padx=5)
+
+    def add(self, text: str | None = None):
+        if text is None:
+            tab_name = self._field.get()
+        else:
+            tab_name = text
+
+        if tab_name:
+            if tab_name not in self._timer_dict.keys():
+                tws = TimerWithSettings(self._timers)
+                self._timers.add(tws, text=tab_name)
+                self._timer_dict[tab_name] = tws
+                self._field.delete(0, END)
+            else:
+                messagebox.showerror('Ошибка', 'Таймер с таким именем уже существует')
+        else:
+            messagebox.showwarning('Внимание', 'Для начала ведите текст (название добавляемого таймера)')
+
+    def remove(self):
+        tab_name = self._field.get()
+
+        if tab_name:
+            if tab_name in self._timer_dict.keys():
+                if len(list(self._timer_dict.keys())) != 1:
+                    self._timers.forget(self._timer_dict[tab_name])
+                    del self._timer_dict[tab_name]
+                    self._field.delete(0, END)
+                else:
+                    messagebox.showwarning('Внимание', 'Список таймеров не может быть пуст')
+            else:
+                messagebox.showerror('Ошибка', 'Таймера с таким именем не существует')
+        else:
+            messagebox.showwarning('Внимание', 'Для начала введите текст (название удаляемого таймера)')
 
 
 

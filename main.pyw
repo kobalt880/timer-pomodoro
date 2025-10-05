@@ -4,8 +4,8 @@ from classes import *
 def main():
     win = Tk()
     
-    nb = TimerWithSettings(win)
-    nb.pack(fill=BOTH)
+    pt = PolyTimer(win)
+    pt.pack(fill=BOTH)
 
     win.mainloop()
         
