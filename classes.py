@@ -3,9 +3,9 @@ from threading import Thread
 from time import sleep
 from pygame import mixer
 from tkinter import messagebox
-from tkinter.ttk import Notebook
+from tkinter.ttk import Notebook, Combobox
+rington_list = ['Aurora', 'Forest', 'Massif']
 mixer.init()
-sound = mixer.Sound('sound.wav')
 
 
 class Timer:
@@ -137,6 +137,7 @@ class TimeFrame(Frame):
         self._lb_time = 1200
         self._break_time = 300
         self._work_time = 1500
+        self._sound = mixer.Sound('rington\\Aurora.wav')
         
         self._set_status('-')
         self._increase_cycle_count()
@@ -188,12 +189,20 @@ class TimeFrame(Frame):
         self._break_time = break_time
         self._work_time = work_time
 
+    def set_rington(self, file_name: str):
+        self._sound.stop()
+        self._sound = mixer.Sound(f'rington\\{file_name}.wav')
+
+    def play_sound(self):
+        self._sound.stop()
+        self._sound.play()
+
     def _work_end(self):
-        sound.play()
+        self.play_sound()
         self._set_status('Перерыв')
 
     def _break_end(self):
-        sound.play()
+        self.play_sound()
         self._increase_cycle_count()
         self._set_status('Работа')
 
@@ -288,8 +297,47 @@ class TimeSettings(Frame):
             else:
                 messagebox.showerror('Ошибка', 'Нельзя устанавливать таймер меньше чем на 5 секунд')
         else:
-            messagebox.showerror('Ошибка',
-            'Введите целые положительные числа в каждое поле')
+            messagebox.showerror('Ошибка', 'Введите целые положительные числа в каждое поле')
+
+
+class RingtonSettings(Frame):
+    def __init__(self, time_frame: TimeFrame, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._timer = time_frame
+        self._create_widgets()
+        self._set_current_rington('Aurora')
+
+    def _create_widgets(self):
+        frame = Frame(self)
+        self._current_ring = Label(frame)
+        text = Label(frame, text='Выберите рингтон')
+        listen_button = Button(frame, text='Послушать текущий', command=self._listen)
+        set_button = Button(frame, text='Установить', command=self._set)
+        self._rington = Combobox(frame, values=rington_list)
+
+        frame.pack(expand=True)
+        self._current_ring.pack()
+        text.pack()
+        self._rington.pack()
+        listen_button.pack(pady=3)
+        set_button.pack(pady=3)
+
+    def _set(self, *args):
+        name = self._rington.get()
+        
+        if name in rington_list:
+            self._timer.set_rington(name)
+            self._set_current_rington(name)
+            messagebox.showinfo('Успешно', 'Успешно установлен рингтон')
+        else:
+            messagebox.showwarning('Внимание', 'Рингтон не выбран')
+
+            
+    def _listen(self):
+        self._timer.play_sound()
+
+    def _set_current_rington(self, text: str):
+        self._current_ring.configure(text=f'Текущий рингтон: {text}')
             
 
 class TimerWithSettings(Notebook):
@@ -300,9 +348,11 @@ class TimerWithSettings(Notebook):
     def _create_widgets(self):
         time_frame = TimeFrame(self)
         time_settings = TimeSettings(time_frame, self)
+        rington_settings = RingtonSettings(time_frame, self)
 
         self.add(time_frame, text='Управление таймером')
         self.add(time_settings, text='Настройка времени')
+        self.add(rington_settings, text='Рингтон')
 
 
 class PolyTimer(Frame):
@@ -365,7 +415,6 @@ class PolyTimer(Frame):
                 messagebox.showerror('Ошибка', 'Таймера с таким именем не существует')
         else:
             messagebox.showwarning('Внимание', 'Для начала введите текст (название удаляемого таймера)')
-
 
 
 class MainWindow(Tk):
