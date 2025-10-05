@@ -3,13 +3,10 @@ from classes import *
 
 def main():
     win = Tk()
+    
+    nb = TimerWithSettings(win)
+    nb.pack(fill=BOTH)
 
-    tf = TimeFrame(win)
-    ts = TimeSettings(tf, win)
-    
-    tf.pack(side=LEFT)
-    ts.pack(side=LEFT)
-    
     win.mainloop()
         
 

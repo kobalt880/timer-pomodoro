@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 from pygame import mixer
 from tkinter import messagebox
+from tkinter.ttk import Notebook
 mixer.init()
 sound = mixer.Sound('sound.wav')
 
@@ -220,7 +221,6 @@ class TimeSettings(Frame):
 
     def _create_widgets(self):
         self._in_minutes = IntVar(value=0)
-
         radio_color = '#bbbbbb'
         
         radio_frame = Frame(self, bg=radio_color)
@@ -229,35 +229,43 @@ class TimeSettings(Frame):
         variable=self._in_minutes, value=1, bg=radio_color)
         set_seconds = Radiobutton(radio_frame, text='В секундах',
         variable=self._in_minutes, value=0, bg=radio_color)
-        
-        self._lb_label = Label(self, text='Время дол. перерыва:')
-        self._lb_field = Entry(self)
 
-        self._break_label = Label(self, text='Время перерыва:')
-        self._break_field = Entry(self)
+        input_set_frame = Frame(self)
 
-        self._work_label = Label(self, text='Время работы:')
-        self._work_field = Entry(self)
+        fields_color = '#dddddd'
+        fields_frame = Frame(input_set_frame, bg=fields_color)
+        lb_label = Label(fields_frame, text='Время дол. перерыва:', bg=fields_color)
+        self._lb_field = Entry(fields_frame)
+        break_label = Label(fields_frame, text='Время перерыва:', bg=fields_color)
+        self._break_field = Entry(fields_frame)
+        work_label = Label(fields_frame, text='Время работы:', bg=fields_color)
+        self._work_field = Entry(fields_frame)
 
-        set_button = Button(self, text='Установить', command=self.set)
+        set_button = Button(input_set_frame, text='Установить', command=self.set)
 
 
         # placing
 
         # radio frame
-        radio_frame.pack()
+        radio_frame.pack(pady=2)
         type_label.grid(column=0, row=0, columnspan=2)
         set_minutes.grid(column=0, row=1)
         set_seconds.grid(column=1, row=1)
 
-
-        self._lb_label.pack()
+        # input set frame
+        input_set_frame.pack()
+        
+        # fields frame
+        fields_frame.pack(side=LEFT, ipadx=5, ipady=2, pady=2)
+        lb_label.pack()
         self._lb_field.pack()
-        self._break_label.pack()
+        break_label.pack()
         self._break_field.pack()
-        self._work_label.pack()
+        work_label.pack()
         self._work_field.pack()
-        set_button.pack(pady=5)
+    
+        # button
+        set_button.pack(side=LEFT, padx=5, pady=2, anchor=N)
 
     def set(self):
         lb_time = self._lb_field.get()
@@ -280,6 +288,26 @@ class TimeSettings(Frame):
         else:
             messagebox.showerror('Ошибка',
             'Введите целые положительные числа в каждое поле')
-    
+            
 
-    
+class TimerWithSettings(Notebook):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._create_widgets()
+
+    def _create_widgets(self):
+        time_frame = TimeFrame(self)
+        time_settings = TimeSettings(time_frame, self)
+
+        self.add(time_frame, text='Таймер')
+        self.add(time_settings, text='Настройки')
+        
+
+
+
+
+
+
+
+
+
