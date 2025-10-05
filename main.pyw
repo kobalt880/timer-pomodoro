@@ -2,12 +2,8 @@ from classes import *
 
 
 def main():
-    win = Tk()
-    
-    pt = PolyTimer(win)
-    pt.pack(fill=BOTH)
-
-    win.mainloop()
+    window = MainWindow()
+    window.mainloop()
         
 
 if __name__ == '__main__':

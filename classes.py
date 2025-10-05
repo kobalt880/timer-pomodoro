@@ -302,7 +302,7 @@ class TimerWithSettings(Notebook):
         time_settings = TimeSettings(time_frame, self)
 
         self.add(time_frame, text='Управление таймером')
-        self.add(time_settings, text='Настройки')
+        self.add(time_settings, text='Настройка времени')
 
 
 class PolyTimer(Frame):
@@ -368,7 +368,17 @@ class PolyTimer(Frame):
 
 
 
+class MainWindow(Tk):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title('Таймер Помодоро')
+        self.geometry('330x290')
+        self.resizable(False, False)
+        self._create_widgets()
 
+    def _create_widgets(self):
+        pt = PolyTimer(self)
+        pt.pack(fill=BOTH)
 
 
 
