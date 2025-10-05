@@ -2,6 +2,7 @@ from tkinter import *
 from threading import Thread
 from time import sleep
 from pygame import mixer
+from tkinter import messagebox
 mixer.init()
 sound = mixer.Sound('sound.wav')
 
@@ -44,10 +45,12 @@ class Timer:
         return self._seconds
 
     def __str__(self):
-        m = self._seconds // 60
-        s = self._seconds - m * 60
+        h = self._seconds // 60 // 60
+        m = self._seconds // 60 - h * 60
+        s = self._seconds - m * 60 - h * 3600
 
-        return (f'{"0" if m < 10 else ""}{m}:'
+        return ((f'{"0" if h < 10 else ""}{h}:' if h > 0 else '') + 
+                f'{"0" if m < 10 else ""}{m}:'
                 f'{"0" if s < 10 else ""}{s}')
 
 
@@ -130,6 +133,9 @@ class TimeFrame(Frame):
         
         self._pc = None
         self._cycle_count = 0
+        self._lb_time = 1200
+        self._break_time = 300
+        self._work_time = 1500
         
         self._set_status('-')
         self._increase_cycle_count()
@@ -153,14 +159,14 @@ class TimeFrame(Frame):
         if self._pc is None:
             self._pc = PomodoroCycle(self._upd_time, self._upd_time,
             self._work_end, self._break_end, self.launch,
-            30, 160, 60)
+            self._break_time, self._lb_time, self._work_time)
             self._pc.launch()
             self._set_status('Работа')
         else:
             self._pc.launch()
 
     def reset(self):
-        self._pc.stop()
+        self.stop()
         self._pc = None
         self._set_time('00:00')
         self._set_status('-')
@@ -170,6 +176,16 @@ class TimeFrame(Frame):
     def stop(self):
         if self._pc is not None:
             self._pc.stop()
+
+    def set_time(self, lb_time: int, break_time: int, work_time: int):
+        if self._pc is not None:
+            self._pc.set_long_break_time(lb_time)
+            self._pc.set_break_time(break_time)
+            self._pc.set_work_time(work_time)
+
+        self._lb_time = lb_time
+        self._break_time = break_time
+        self._work_time = work_time
 
     def _work_end(self):
         sound.play()
@@ -196,6 +212,74 @@ class TimeFrame(Frame):
         self._cycle_count_label.configure(text=text)
 
 
+class TimeSettings(Frame):
+    def __init__(self, time_frame: TimeFrame, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._timer = time_frame
+        self._create_widgets()
 
+    def _create_widgets(self):
+        self._in_minutes = IntVar(value=0)
+
+        radio_color = '#bbbbbb'
+        
+        radio_frame = Frame(self, bg=radio_color)
+        type_label = Label(radio_frame, text='Установить время', bg=radio_color)
+        set_minutes = Radiobutton(radio_frame, text='В минутах',
+        variable=self._in_minutes, value=1, bg=radio_color)
+        set_seconds = Radiobutton(radio_frame, text='В секундах',
+        variable=self._in_minutes, value=0, bg=radio_color)
+        
+        self._lb_label = Label(self, text='Время дол. перерыва:')
+        self._lb_field = Entry(self)
+
+        self._break_label = Label(self, text='Время перерыва:')
+        self._break_field = Entry(self)
+
+        self._work_label = Label(self, text='Время работы:')
+        self._work_field = Entry(self)
+
+        set_button = Button(self, text='Установить', command=self.set)
+
+
+        # placing
+
+        # radio frame
+        radio_frame.pack()
+        type_label.grid(column=0, row=0, columnspan=2)
+        set_minutes.grid(column=0, row=1)
+        set_seconds.grid(column=1, row=1)
+
+
+        self._lb_label.pack()
+        self._lb_field.pack()
+        self._break_label.pack()
+        self._break_field.pack()
+        self._work_label.pack()
+        self._work_field.pack()
+        set_button.pack(pady=5)
+
+    def set(self):
+        lb_time = self._lb_field.get()
+        break_time = self._break_field.get()
+        work_time = self._work_field.get()
+
+        if lb_time.isdigit() and break_time.isdigit() and work_time.isdigit():
+            lb_time = int(lb_time)
+            break_time = int(break_time)
+            work_time = int(work_time)
+            
+            if self._in_minutes.get():
+                lb_time *= 60
+                break_time *= 60
+                work_time *= 60
+            
+            self._timer.set_time(lb_time, break_time, work_time)
+            messagebox.showinfo('Успешно',
+            'Успешно изменено время')
+        else:
+            messagebox.showerror('Ошибка',
+            'Введите целые положительные числа в каждое поле')
+    
 
     

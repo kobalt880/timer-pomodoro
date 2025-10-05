@@ -5,7 +5,10 @@ def main():
     win = Tk()
 
     tf = TimeFrame(win)
-    tf.pack()
+    ts = TimeSettings(tf, win)
+    
+    tf.pack(side=LEFT)
+    ts.pack(side=LEFT)
     
     win.mainloop()
         
