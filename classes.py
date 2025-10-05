@@ -4,8 +4,32 @@ from time import sleep
 from pygame import mixer
 from tkinter import messagebox
 from tkinter.ttk import Notebook, Combobox
+import json
+import datetime as d
 rington_list = ['Aurora', 'Forest', 'Massif']
 mixer.init()
+
+
+class Logger:
+    @classmethod
+    def init(cls):
+        with open('log.json', 'r') as f:
+            cls.date_dict = json.load(f)
+            print(cls.date_dict)
+
+    @classmethod
+    def write(cls):
+        date = str(d.datetime.now()).split()[0]
+        
+        if date in cls.date_dict.keys():
+            cls.date_dict[date] += 1
+        else:
+            cls.date_dict[date] = 1
+
+    @classmethod
+    def push(cls):
+        with open('log.json', 'w') as f:
+            json.dump(cls.date_dict, f)
 
 
 class Timer:
@@ -140,7 +164,7 @@ class TimeFrame(Frame):
         self._sound = mixer.Sound('rington\\Aurora.wav')
         
         self._set_status('-')
-        self._increase_cycle_count()
+        self._increase_cycle_count(False)
 
     def _create_widgets(self):
         self._status_label = Label(self)
@@ -216,7 +240,10 @@ class TimeFrame(Frame):
     def _set_status(self, status: str):
         self._status_label.configure(text=f'Статус: {status}')
 
-    def _increase_cycle_count(self):
+    def _increase_cycle_count(self, write_in_json: bool = True):
+        if write_in_json:
+            Logger.write()
+            
         self._cycle_count += 1
         text = 'Помодоро № ' + str(self._cycle_count)
         self._cycle_count_label.configure(text=text)
@@ -346,13 +373,16 @@ class TimerWithSettings(Notebook):
         self._create_widgets()
 
     def _create_widgets(self):
-        time_frame = TimeFrame(self)
-        time_settings = TimeSettings(time_frame, self)
-        rington_settings = RingtonSettings(time_frame, self)
+        self._time_frame = TimeFrame(self)
+        time_settings = TimeSettings(self._time_frame, self)
+        rington_settings = RingtonSettings(self._time_frame, self)
 
-        self.add(time_frame, text='Управление таймером')
+        self.add(self._time_frame, text='Управление таймером')
         self.add(time_settings, text='Настройка времени')
         self.add(rington_settings, text='Рингтон')
+
+    def kill(self):
+        self._time_frame.stop()
 
 
 class PolyTimer(Frame):
@@ -406,6 +436,7 @@ class PolyTimer(Frame):
         if tab_name:
             if tab_name in self._timer_dict.keys():
                 if len(list(self._timer_dict.keys())) != 1:
+                    self._timer_dict[tab_name].kill()
                     self._timers.forget(self._timer_dict[tab_name])
                     del self._timer_dict[tab_name]
                     self._field.delete(0, END)
@@ -424,10 +455,15 @@ class MainWindow(Tk):
         self.geometry('330x290')
         self.resizable(False, False)
         self._create_widgets()
+        self.protocol('WM_DELETE_WINDOW', self.delete)
 
     def _create_widgets(self):
         pt = PolyTimer(self)
         pt.pack(fill=BOTH)
 
+    def delete(self, *args):
+        self.destroy()
+        Logger.push()
 
 
+Logger.init()
