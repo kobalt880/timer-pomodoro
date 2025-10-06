@@ -35,7 +35,12 @@ class Logger:
 
     @classmethod
     def return_day(cls):
-        return cls.date_dict[list(cls.date_dict.keys())[-1]]
+        key = str(d.datetime.now()).split()[0]
+
+        if key in cls.date_dict.keys():
+            return cls.date_dict[key]
+        else:
+            return 0
 
     @classmethod
     def week_generator(cls):
@@ -67,6 +72,38 @@ class Logger:
             key = list(cls.date_dict.keys())[0]
             cls.date_dict.pop(key)
 
+
+class ActivityDiary(Toplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title('Статистика завершенных помодоро')
+        self.resizable(False, False)
+        self.geometry('380x119')
+        self._create_widgets()
+        self._init_stats()
+        self.grab_set()
+
+    def _create_widgets(self):
+        self._day_stat = Label(self)
+        self._week_stat = Label(self)
+        self._month_stat = Label(self)
+        close_button = Button(self, text='Закрыть', command=self.destroy)
+
+        self._day_stat.pack(anchor=W, padx=10)
+        self._week_stat.pack(anchor=W, padx=10)
+        self._month_stat.pack(anchor=W, padx=10)
+        close_button.pack(pady=15, padx=20, fill=X)
+
+    def _init_stats(self):
+        today_pc = Logger.return_day()
+        week_pc = sum(Logger.week_generator())
+        month_pc = sum(Logger.month_generator())
+        
+        self._day_stat.configure(text=f'Завершенных помодоро за сегодня: {today_pc}')
+        self._week_stat.configure(text=f'Завершенных помодоро за последнюю неделю: {week_pc}')
+        self._month_stat.configure(text=f'Завершенных помодоро за последний месяц: {month_pc}')
+        
+    
 
 class Timer:
     def __init__(self, seconds: int, tick_function, end_function):
@@ -438,6 +475,8 @@ class PolyTimer(Frame):
         self._field = Entry(bottom_frame)
         add_button = Button(buttons, text='Добавить таймер', command=self.add)
         remove_button = Button(buttons, text='Удалить таймер', command=self.remove)
+        show_stats_button = Button(bottom_frame, text='Показать дневник активности',
+        command=self.show_stats)
 
         # placing
         self._timers.pack(fill=X)
@@ -448,6 +487,8 @@ class PolyTimer(Frame):
         buttons.pack(pady=2)
         add_button.pack(side=LEFT, padx=5)
         remove_button.pack(side=LEFT, padx=5)
+
+        show_stats_button.pack(pady=3)
 
     def add(self, text: str | None = None):
         if text is None:
@@ -483,12 +524,15 @@ class PolyTimer(Frame):
         else:
             messagebox.showwarning('Внимание', 'Для начала введите текст (название удаляемого таймера)')
 
+    def show_stats(self):
+        ActivityDiary()
+
 
 class MainWindow(Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title('Таймер Помодоро')
-        self.geometry('330x290')
+        self.geometry('330x322')
         self.resizable(False, False)
         self._create_widgets()
         self.protocol('WM_DELETE_WINDOW', self.delete)
