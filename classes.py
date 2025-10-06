@@ -15,7 +15,7 @@ class Logger:
     def init(cls):
         with open('log.json', 'r') as f:
             cls.date_dict = json.load(f)
-            print(cls.date_dict)
+        cls.clean()
 
     @classmethod
     def write(cls):
@@ -26,10 +26,46 @@ class Logger:
         else:
             cls.date_dict[date] = 1
 
+        cls.clean()
+
     @classmethod
     def push(cls):
         with open('log.json', 'w') as f:
             json.dump(cls.date_dict, f)
+
+    @classmethod
+    def return_day(cls):
+        return cls.date_dict[list(cls.date_dict.keys())[-1]]
+
+    @classmethod
+    def week_generator(cls):
+        for key in cls.date_dict.keys():
+            if cls._get_day_substract(key) <= 7:
+                yield cls.date_dict[key]
+            
+    @classmethod
+    def month_generator(cls):
+        for key in cls.date_dict.keys():
+            if cls._get_day_substract(key) <= 30:
+                yield cls.date_dict[key]
+
+    @classmethod
+    def _get_day_substract(cls, date: str):
+        now = d.datetime.now()
+        date = (int(s) for s in date.split('-'))
+        date = d.datetime(*date)
+        result = str(now - date)
+
+        if str(result).count(' ') > 0:
+            return int(result.split()[0])
+        else:
+            return 0
+
+    @classmethod
+    def clean(cls):
+         while len(list(cls.date_dict.keys())) > 30:
+            key = list(cls.date_dict.keys())[0]
+            cls.date_dict.pop(key)
 
 
 class Timer:
@@ -197,7 +233,7 @@ class TimeFrame(Frame):
         self._set_time('00:00')
         self._set_status('-')
         self._cycle_count = 0
-        self._increase_cycle_count()
+        self._increase_cycle_count(False)
 
     def stop(self):
         if self._pc is not None:
